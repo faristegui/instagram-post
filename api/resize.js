@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Falta el parámetro 'url'" });
     }
 
-    // Descargar imagen
+    // Descargar la imagen
     const resp = await fetch(url);
     const arrayBuffer = await resp.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -19,18 +19,35 @@ export default async function handler(req, res) {
 
     const original = sharp(buffer);
 
-    // Redimensionar manteniendo proporciones y rellenando con negro
-    const resized = await original
-      .resize(WIDTH, HEIGHT, {
-        fit: "contain",
-        background: { r: 0, g: 0, b: 0, alpha: 1 } // FONDO NEGRO
-      })
-      .jpeg({ quality: 90 })
+    // 1️⃣ Fondo difuminado (usar la imagen, pero cubriendo todo)
+    const blurredBackground = await original
+      .resize(WIDTH, HEIGHT, { fit: "cover" })
+      .blur(40)
+      .jpeg() // ya puede ser JPEG porque es solo fondo
       .toBuffer();
 
-    // Devolver imagen final
+    // 2️⃣ Imagen principal encima (contain + fondo transparente)
+    const mainImage = await original
+      .resize(WIDTH, HEIGHT, {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 } // transparencia real
+      })
+      .png() // PNG mantiene transparencia mientras se compone
+      .toBuffer();
+
+    // 3️⃣ Componer: blur de fondo + imagen encima centrada
+    const finalImage = await sharp(blurredBackground)
+      .composite([
+        {
+          input: mainImage,
+          gravity: "center"
+        }
+      ])
+      .jpeg({ quality: 90 }) // salida final
+      .toBuffer();
+
     res.setHeader("Content-Type", "image/jpeg");
-    res.send(resized);
+    res.send(finalImage);
 
   } catch (err) {
     res.status(500).json({
