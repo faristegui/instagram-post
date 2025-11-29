@@ -8,45 +8,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Falta el parámetro 'url'" });
     }
 
-    // Descarga
+    // Descargar imagen
     const resp = await fetch(url);
     const arrayBuffer = await resp.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Tamaño final
+    // Tamaño final Instagram vertical
     const WIDTH = 1080;
     const HEIGHT = 1350;
 
     const original = sharp(buffer);
 
-    // 1️⃣ Fondo difuminado (cover)
-    const blurredBackground = await original
-      .resize(WIDTH, HEIGHT, { fit: "cover" })
-      .blur(40)
-      .toBuffer();
-
-    // 2️⃣ Imagen principal (contain) con fondo TRANSPARENTE
-    const resizedMain = await original
+    // Redimensionar manteniendo proporciones y rellenando con negro
+    const resized = await original
       .resize(WIDTH, HEIGHT, {
         fit: "contain",
-        background: { r: 0, g: 0, b: 0, alpha: 0 } // transparente
+        background: { r: 0, g: 0, b: 0, alpha: 1 } // FONDO NEGRO
       })
-      .png() // usamos PNG para mantener transparencia
-      .toBuffer();
-
-    // 3️⃣ Composición final
-    const finalImage = await sharp(blurredBackground)
-      .composite([
-        {
-          input: resizedMain,
-          gravity: "center"
-        }
-      ])
       .jpeg({ quality: 90 })
       .toBuffer();
 
+    // Devolver imagen final
     res.setHeader("Content-Type", "image/jpeg");
-    res.send(finalImage);
+    res.send(resized);
 
   } catch (err) {
     res.status(500).json({
