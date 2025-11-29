@@ -11,10 +11,10 @@ export default async function handler(req, res) {
     const WIDTH = 1080;
     const HEIGHT = 1350;
     const MARGIN = 20;
-    const LOGO_SIZE_RATIO = 0.15;
-    const BORDER_RADIUS = 20;
-    const BORDER_STROKE = 2;
-    const BORDER_COLOR = "rgba(0,0,0,0.2)";
+    const LOGO_SIZE_RATIO = 0.17;
+    const BORDER_RADIUS = 10;
+    const BORDER_STROKE = 3;
+    const BORDER_COLOR = "rgba(0,0,0,0.4)";
 
     // Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
