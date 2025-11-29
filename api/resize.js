@@ -11,24 +11,23 @@ export default async function handler(req, res) {
     const WIDTH = 1080;
     const HEIGHT = 1350;
     const MARGIN = 20;
-    const LOGO_SIZE_RATIO = 0.15; // 15% del ancho de la imagen
-    const BORDER_RADIUS = 20;      // bordes redondeados
-    const BORDER_STROKE = 2;       // grosor del borde
-    const BORDER_COLOR = "rgba(0,0,0,0.2)"; // borde negro sutil
+    const LOGO_SIZE_RATIO = 0.15;
+    const BORDER_RADIUS = 20;
+    const BORDER_STROKE = 2;
+    const BORDER_COLOR = "rgba(0,0,0,0.2)";
 
-    // 1️⃣ Descargar imagen principal
+    // Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-    // 2️⃣ Redimensionar imagen principal sin deformar, fondo blanco
+    // Redimensionar imagen principal
     let image = sharp(mainBuffer)
       .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
       .flatten({ background: { r: 255, g: 255, b: 255 } });
 
-    // 3️⃣ Procesar logo si se pasó
+    // Procesar logo si existe
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
 
-      // Redimensionar logo
       const logoResized = await sharp(logoBuffer)
         .resize(Math.floor(WIDTH * LOGO_SIZE_RATIO), null, { fit: "contain" })
         .png()
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
       const logoMeta = await sharp(logoResized).metadata();
       const logoBase64 = logoResized.toString("base64");
 
-      // SVG overlay: clipPath para redondear + borde visible
+      // SVG: logo + borde visible encima
       const svgOverlay = `
         <svg width="${logoMeta.width}" height="${logoMeta.height}">
           <defs>
@@ -45,17 +44,16 @@ export default async function handler(req, res) {
               <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}" />
             </clipPath>
           </defs>
-          <!-- Borde sutil -->
-          <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}"
-                fill="transparent" stroke="${BORDER_COLOR}" stroke-width="${BORDER_STROKE}" />
-          <!-- Logo -->
+          <!-- Logo recortado -->
           <image href="data:image/png;base64,${logoBase64}" width="100%" height="100%" clip-path="url(#clip)" />
+          <!-- Borde encima -->
+          <rect x="0" y="0" width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}"
+                fill="transparent" stroke="${BORDER_COLOR}" stroke-width="${BORDER_STROKE}" />
         </svg>
       `;
 
       const logoRounded = Buffer.from(svgOverlay);
 
-      // Componer logo sobre la imagen
       image = image.composite([
         {
           input: logoRounded,
@@ -65,7 +63,6 @@ export default async function handler(req, res) {
       ]);
     }
 
-    // 4️⃣ Guardar como JPEG y enviar
     const output = await image.jpeg({ quality: 90 }).toBuffer();
     res.setHeader("Content-Type", "image/jpeg");
     res.send(output);
