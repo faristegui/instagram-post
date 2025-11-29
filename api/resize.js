@@ -11,10 +11,10 @@ export default async function handler(req, res) {
     const WIDTH = 1080;
     const HEIGHT = 1350;
     const MARGIN = 20;
-    const LOGO_SIZE_RATIO = 0.19; // 15% del ancho de la imagen
-    const BORDER_RADIUS = 10;      // borde redondeado fijo
-    const BORDER_STROKE = 2;       // grosor línea borde
-    const BORDER_COLOR = "rgba(0,0,0,0.2)"; // color línea borde (sutil)
+    const LOGO_SIZE_RATIO = 0.15; // 15% del ancho de la imagen
+    const BORDER_RADIUS = 20;      // bordes redondeados
+    const BORDER_STROKE = 2;       // grosor del borde
+    const BORDER_COLOR = "rgba(0,0,0,0.2)"; // borde negro sutil
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       const logoMeta = await sharp(logoResized).metadata();
       const logoBase64 = logoResized.toString("base64");
 
-      // Crear SVG overlay con bordes redondeados + línea de borde sutil
+      // SVG overlay: clipPath para redondear + borde visible
       const svgOverlay = `
         <svg width="${logoMeta.width}" height="${logoMeta.height}">
           <defs>
@@ -45,8 +45,10 @@ export default async function handler(req, res) {
               <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}" />
             </clipPath>
           </defs>
+          <!-- Borde sutil -->
           <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}"
-            fill="white" stroke="${BORDER_COLOR}" stroke-width="${BORDER_STROKE}" />
+                fill="transparent" stroke="${BORDER_COLOR}" stroke-width="${BORDER_STROKE}" />
+          <!-- Logo -->
           <image href="data:image/png;base64,${logoBase64}" width="100%" height="100%" clip-path="url(#clip)" />
         </svg>
       `;
