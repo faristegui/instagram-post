@@ -13,8 +13,6 @@ export default async function handler(req, res) {
     const MARGIN = 20;
     const LOGO_SIZE_RATIO = 0.15; // 15% del ancho
     const BORDER_RADIUS = 20;
-    const SHADOW_OFFSET = 5;
-    const SHADOW_BLUR = 4;
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -40,22 +38,8 @@ export default async function handler(req, res) {
 
       const logoMeta = await sharp(logoRounded).metadata();
 
-      // Crear sombra gris del logo: mismo logo, gris y desenfocado
-      const logoShadow = await sharp(logoRounded)
-        .tint({ r: 0, g: 0, b: 0 })      // gris oscuro
-        .modulate({ brightness: 0.3 })   // más tenue
-        .blur(SHADOW_BLUR)
-        .toBuffer();
-
-      // Componer sombra y logo sobre la imagen
+      // Componer logo sobre la imagen
       image = image.composite([
-        // sombra (desplazada)
-        {
-          input: logoShadow,
-          left: WIDTH - logoMeta.width - MARGIN + SHADOW_OFFSET,
-          top: HEIGHT - logoMeta.height - MARGIN + SHADOW_OFFSET,
-        },
-        // logo principal
         {
           input: logoRounded,
           left: WIDTH - logoMeta.width - MARGIN,
