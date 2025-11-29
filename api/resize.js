@@ -12,7 +12,6 @@ export default async function handler(req, res) {
     const HEIGHT = 1350;
     const MARGIN = 20;
     const LOGO_SIZE_RATIO = 0.15; // 15% del ancho
-    const BORDER_RADIUS = 20;
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -22,26 +21,21 @@ export default async function handler(req, res) {
       .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
       .flatten({ background: { r: 255, g: 255, b: 255 } });
 
-    // 3️⃣ Si hay logo, procesarlo
+    // 3️⃣ Agregar logo si se pasa
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
 
-      // Redimensionar logo y aplicar bordes redondeados
-      const logoRounded = await sharp(logoBuffer)
+      // Redimensionar logo
+      const logoResized = await sharp(logoBuffer)
         .resize(Math.floor(WIDTH * LOGO_SIZE_RATIO), null, { fit: "contain" })
-        .composite([{
-          input: Buffer.from(`<svg><rect x="0" y="0" width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}"/></svg>`),
-          blend: "dest-in"
-        }])
-        .png()
         .toBuffer();
 
-      const logoMeta = await sharp(logoRounded).metadata();
+      const logoMeta = await sharp(logoResized).metadata();
 
       // Componer logo sobre la imagen
       image = image.composite([
         {
-          input: logoRounded,
+          input: logoResized,
           left: WIDTH - logoMeta.width - MARGIN,
           top: HEIGHT - logoMeta.height - MARGIN,
         },
