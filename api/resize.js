@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     const HEIGHT = 1350;
     const MARGIN = 20;
     const LOGO_SIZE_RATIO = 0.15; // 15% del ancho
-    const BORDER_RADIUS = 20;
+    const BORDER_RADIUS = 8;
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
