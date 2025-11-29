@@ -15,39 +15,22 @@ export default async function handler(req, res) {
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-    // 2️⃣ Redimensionar la imagen manteniendo proporciones y rellenando fondo blanco
-    const mainImage = await sharp(mainBuffer)
-      .resize(WIDTH, HEIGHT, {
-        fit: "contain",
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-      })
-      .flatten({ background: { r: 255, g: 255, b: 255 } }) // asegura fondo blanco
-      .toBuffer();
+    // 2️⃣ Redimensionar la imagen principal sin deformar y rellenando con blanco
+    let image = sharp(mainBuffer)
+      .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
+      .flatten({ background: { r: 255, g: 255, b: 255 } });
 
-    // 3️⃣ Crear canvas final blanco y poner la imagen centrada
-    let finalImage = sharp({
-      create: {
-        width: WIDTH,
-        height: HEIGHT,
-        channels: 3,
-        background: { r: 255, g: 255, b: 255 },
-      },
-    }).composite([{ input: mainImage, gravity: "center" }]);
-
-    // 4️⃣ Agregar logo si se pasa
+    // 3️⃣ Si hay logo, agregarlo
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
 
       const logoResized = await sharp(logoBuffer)
-        .resize(Math.floor(WIDTH * 0.15), null, {
-          fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
+        .resize(Math.floor(WIDTH * 0.15), null, { fit: "contain" })
         .toBuffer();
 
       const logoMeta = await sharp(logoResized).metadata();
 
-      finalImage = finalImage.composite([
+      image = image.composite([
         {
           input: logoResized,
           left: WIDTH - logoMeta.width - MARGIN,
@@ -56,8 +39,8 @@ export default async function handler(req, res) {
       ]);
     }
 
-    // 5️⃣ Enviar resultado
-    const output = await finalImage.jpeg({ quality: 90 }).toBuffer();
+    // 4️⃣ Guardar como JPEG y enviar
+    const output = await image.jpeg({ quality: 90 }).toBuffer();
     res.setHeader("Content-Type", "image/jpeg");
     res.send(output);
 
@@ -65,3 +48,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "Error procesando la imagen", details: err.message });
   }
 }
+
