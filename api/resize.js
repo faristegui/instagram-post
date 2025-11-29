@@ -13,6 +13,8 @@ export default async function handler(req, res) {
     const MARGIN = 20;
     const LOGO_SIZE_RATIO = 0.19; // 15% del ancho de la imagen
     const BORDER_RADIUS = 10;      // borde redondeado fijo
+    const BORDER_STROKE = 2;       // grosor línea borde
+    const BORDER_COLOR = "rgba(0,0,0,0.2)"; // color línea borde (sutil)
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
@@ -35,7 +37,7 @@ export default async function handler(req, res) {
       const logoMeta = await sharp(logoResized).metadata();
       const logoBase64 = logoResized.toString("base64");
 
-      // Crear SVG overlay con bordes redondeados
+      // Crear SVG overlay con bordes redondeados + línea de borde sutil
       const svgOverlay = `
         <svg width="${logoMeta.width}" height="${logoMeta.height}">
           <defs>
@@ -43,6 +45,8 @@ export default async function handler(req, res) {
               <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}" />
             </clipPath>
           </defs>
+          <rect width="100%" height="100%" rx="${BORDER_RADIUS}" ry="${BORDER_RADIUS}"
+            fill="white" stroke="${BORDER_COLOR}" stroke-width="${BORDER_STROKE}" />
           <image href="data:image/png;base64,${logoBase64}" width="100%" height="100%" clip-path="url(#clip)" />
         </svg>
       `;
