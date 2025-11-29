@@ -11,18 +11,18 @@ export default async function handler(req, res) {
     const WIDTH = 1080;
     const HEIGHT = 1350;
     const MARGIN = 20;
-    const LOGO_SIZE_RATIO = 0.15; // 15% del ancho
-    const BORDER_RADIUS = 8;
+    const LOGO_SIZE_RATIO = 0.19; // 15% del ancho de la imagen
+    const BORDER_RADIUS = 10;      // borde redondeado fijo
 
     // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-    // 2️⃣ Redimensionar imagen principal sin deformar y fondo blanco
+    // 2️⃣ Redimensionar imagen principal sin deformar, fondo blanco
     let image = sharp(mainBuffer)
       .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
       .flatten({ background: { r: 255, g: 255, b: 255 } });
 
-    // 3️⃣ Si hay logo, procesarlo
+    // 3️⃣ Procesar logo si se pasó
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
 
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
       const logoRounded = Buffer.from(svgOverlay);
 
-      // Componer logo redondeado sobre la imagen
+      // Componer logo sobre la imagen
       image = image.composite([
         {
           input: logoRounded,
