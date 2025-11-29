@@ -10,20 +10,17 @@ export default async function handler(req, res) {
 
     const WIDTH = 1080;
     const HEIGHT = 1350;
-    const MARGIN = 20; // margen para el logo desde los bordes
+    const MARGIN = 20;
 
-    // 1️⃣ Descargar imagen principal
+    // Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-    // 2️⃣ Redimensionar imagen principal sin deformar
-    const imageBuffer = await sharp(mainBuffer)
-      .resize(WIDTH, HEIGHT, {
-        fit: "contain",
-        background: { r: 255, g: 255, b: 255, alpha: 1 }, // fondo blanco
-      })
+    // Redimensionar imagen manteniendo proporciones
+    const mainImage = await sharp(mainBuffer)
+      .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
       .toBuffer();
 
-    // 3️⃣ Crear canvas final y centrar la imagen
+    // Crear canvas blanco
     let finalImage = sharp({
       create: {
         width: WIDTH,
@@ -31,25 +28,22 @@ export default async function handler(req, res) {
         channels: 3,
         background: { r: 255, g: 255, b: 255 },
       },
-    }).composite([{ input: imageBuffer, gravity: "center" }]);
+    }).composite([{ input: mainImage, gravity: "center" }]);
 
-    // 4️⃣ Agregar logo (si se pasa logoUrl)
+    // Agregar logo si se pasa
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
       const logoResized = await sharp(logoBuffer)
-        .resize(Math.floor(WIDTH * 0.15), null, { // 15% del ancho
-          fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
+        .resize(Math.floor(WIDTH * 0.15), null, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
         .toBuffer();
 
-      const logoMetadata = await sharp(logoResized).metadata();
+      const logoMeta = await sharp(logoResized).metadata();
 
       finalImage = finalImage.composite([
         {
           input: logoResized,
-          left: WIDTH - logoMetadata.width - MARGIN,
-          top: HEIGHT - logoMetadata.height - MARGIN,
+          left: WIDTH - logoMeta.width - MARGIN,
+          top: HEIGHT - logoMeta.height - MARGIN,
         },
       ]);
     }
@@ -59,9 +53,6 @@ export default async function handler(req, res) {
     res.send(output);
 
   } catch (err) {
-    res.status(500).json({
-      error: "Error procesando la imagen",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Error procesando la imagen", details: err.message });
   }
 }
