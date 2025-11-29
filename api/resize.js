@@ -12,15 +12,19 @@ export default async function handler(req, res) {
     const HEIGHT = 1350;
     const MARGIN = 20;
 
-    // Descargar imagen principal
+    // 1️⃣ Descargar imagen principal
     const mainBuffer = Buffer.from(await (await fetch(url)).arrayBuffer());
 
-    // Redimensionar imagen manteniendo proporciones
+    // 2️⃣ Redimensionar la imagen manteniendo proporciones y rellenando fondo blanco
     const mainImage = await sharp(mainBuffer)
-      .resize(WIDTH, HEIGHT, { fit: "contain", background: { r: 255, g: 255, b: 255 } })
+      .resize(WIDTH, HEIGHT, {
+        fit: "contain",
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      })
+      .flatten({ background: { r: 255, g: 255, b: 255 } }) // asegura fondo blanco
       .toBuffer();
 
-    // Crear canvas blanco
+    // 3️⃣ Crear canvas final blanco y poner la imagen centrada
     let finalImage = sharp({
       create: {
         width: WIDTH,
@@ -30,11 +34,15 @@ export default async function handler(req, res) {
       },
     }).composite([{ input: mainImage, gravity: "center" }]);
 
-    // Agregar logo si se pasa
+    // 4️⃣ Agregar logo si se pasa
     if (logoUrl) {
       const logoBuffer = Buffer.from(await (await fetch(logoUrl)).arrayBuffer());
+
       const logoResized = await sharp(logoBuffer)
-        .resize(Math.floor(WIDTH * 0.15), null, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .resize(Math.floor(WIDTH * 0.15), null, {
+          fit: "contain",
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
         .toBuffer();
 
       const logoMeta = await sharp(logoResized).metadata();
@@ -48,6 +56,7 @@ export default async function handler(req, res) {
       ]);
     }
 
+    // 5️⃣ Enviar resultado
     const output = await finalImage.jpeg({ quality: 90 }).toBuffer();
     res.setHeader("Content-Type", "image/jpeg");
     res.send(output);
