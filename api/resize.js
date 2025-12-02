@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     }
 
     const WIDTH = 1080;
-    const HEIGHT = 1080;  // Para post cuadrados poner 1350
+    const HEIGHT = 1080;  //  1350 - 1080
     const MARGIN = 20;
     const LOGO_SIZE_RATIO = 0.17;
     const BORDER_RADIUS = 10;
